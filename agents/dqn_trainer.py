@@ -38,7 +38,8 @@ class DqnTrainer(Trainer):
         self.step = 1
 
     def begin(self):
-        self.agent.set_epsilon(epsilon(self.epoch))
+        # self.agent.set_epsilon(epsilon(self.epoch))
+        pass
 
     def end(self, total_reward):
         self.episode += 1
@@ -49,7 +50,7 @@ class DqnTrainer(Trainer):
         if self.step % self.steps_per_update_model == 0:
             if self._experience(state, action, reward, state_next):
                 self._update_model()
-                self.agent.set_epsilon(epsilon(self.epoch))
+                # self.agent.set_epsilon(epsilon(self.epoch))
         if self.step % self.steps_per_update_target == 0:
             self._update_target()
         self.step += 1

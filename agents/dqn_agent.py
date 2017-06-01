@@ -32,10 +32,10 @@ class QNetwork(Chain):
 
 class DqnAgent(Agent):
     def __init__(self, dim, model_file, greedy=False):
-        self.model = QNetwork(dim.input, 64, dim.output)
+        self.model = QNetwork(dim.input, 32, dim.output)
         self.dim = dim
         self.greedy = greedy
-        self.epsilon = 0.05
+        self.epsilon = 0.050
         self.model_file = model_file
         self.epoch = 0
         self.load_model()
