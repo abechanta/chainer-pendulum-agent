@@ -15,11 +15,11 @@ import sys
 
 MODEL_FILE = os.path.join(os.path.dirname(__file__), "model.trained/pendulum.{}.npz")
 LOG_FILE = os.path.join(os.path.dirname(__file__), "model.log/pendulum.{}.pkl")
-REC_FILE = os.path.join(os.path.dirname(__file__), "model.log/pendulum-experiment-1")
+RECORD_PATH = os.path.join(os.path.dirname(__file__), "model.log/pendulum-experiment-1")
 
 
-def train(render, episodes):
-    env = PendulumEnvironment(render=render, record_path=REC_FILE)
+def train(render, episodes, record_path):
+    env = PendulumEnvironment(render=render, record_path=record_path)
     agent = DqnAgent(env.get_dim(Preprocessor.NB_STATE_HISTORY), model_file=MODEL_FILE)
     simulator = Simulator(env, agent, train=True)
 
@@ -28,8 +28,8 @@ def train(render, episodes):
         logger((e, f, action, reward, episode_done))
 
 
-def test(render, episodes):
-    env = PendulumEnvironment(render=render)
+def test(render, episodes, record_path):
+    env = PendulumEnvironment(render=render, record_path=record_path)
     agent = DqnAgent(env.get_dim(Preprocessor.NB_STATE_HISTORY), model_file=MODEL_FILE, greedy=True)
     simulator = Simulator(env, agent, train=False)
     # env = PendulumEnvironment(render=render, debug=True)
@@ -49,10 +49,12 @@ def test(render, episodes):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pendulum Agent with DQN")
     parser.add_argument("--episodes", type=int, default=10, help="number of episodes to run")
-    parser.add_argument("--render", action="store_const", const=True, default=False, help="render or not")
-    parser.add_argument("--train", action="store_const", const=True, default=False, help="train or not")
+    parser.add_argument("--train", action="store_const", const=True, default=False, help="train agent or not")
+    parser.add_argument("--render", action="store_const", const=True, default=False, help="render behavior or not")
+    parser.add_argument("--record", action="store_const", const=True, default=False, help="record behavior or not")
     args = parser.parse_args()
+    record_path = RECORD_PATH if args.record else ""
     if args.train:
-        train(args.render, args.episodes)
+        train(render=args.render, episodes=args.episodes, record_path=record_path)
     else:
-        test(args.render, args.episodes)
+        test(render=args.render, episodes=args.episodes, record_path=record_path)
