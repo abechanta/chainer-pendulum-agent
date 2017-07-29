@@ -20,7 +20,13 @@ def epsilon(epoch):
 
 
 def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+    return 1 / (1 + np.exp(-x / 100) + 0.001)
+
+
+def tanh(x):
+    ex1 = np.exp(+x / 100)
+    ex2 = np.exp(-x / 100)
+    return (ex1 - ex2) / (ex1 + ex2)
 
 
 class DqnTrainer(Trainer):
@@ -46,17 +52,17 @@ class DqnTrainer(Trainer):
         if self.episode % self.episodes_per_record == 0:
             self.agent.save_model(self.epoch)
 
-    def train(self, state, action, reward, state_next):
+    def train(self, state, action, reward, episode_done, state_next):
         if self.step % self.steps_per_update_model == 0:
-            if self._experience(state, action, reward, state_next):
+            if self._experience(state, action, reward, episode_done, state_next):
                 self._update_model()
                 # self.agent.set_epsilon(epsilon(self.epoch))
         if self.step % self.steps_per_update_target == 0:
             self._update_target()
         self.step += 1
 
-    def _experience(self, state, action, reward, state_next):
-        self.replay_memory.append((state, action, reward, state_next))
+    def _experience(self, state, action, reward, episode_done, state_next):
+        self.replay_memory.append((state, action, reward, episode_done, state_next))
         if len(self.replay_memory) > REPLAY_CAPACITY:
             self.replay_memory.popleft()
         return len(self.replay_memory) >= MINI_BATCH_SIZE
@@ -74,18 +80,16 @@ class DqnTrainer(Trainer):
         self.epoch += 1
 
     def _forward(self, batch):
-        predicted_qv = self.agent.model.forward(
-            Variable(np.concatenate(batch[:, 0]).astype(np.float32).reshape(MINI_BATCH_SIZE, -1))
-        )
+        state = *map(np.array, batch[:,0]),
+        predicted_qv = self.agent.model.forward(Variable(np.array(state).astype(np.float32)))
         target_qv = predicted_qv.data.copy()
-        qv = self.target_model.forward(
-            Variable(np.concatenate(batch[:, 3]).astype(np.float32).reshape(MINI_BATCH_SIZE, -1))
-        )
+        state_next = *map(np.array, batch[:,4]),
+        qv = self.target_model.forward(Variable(np.array(state_next).astype(np.float32)))
         qv = np.max(qv.data, axis=1)
-        for i, action, reward in zip(
-            range(len(batch)), batch[:, 1], sigmoid(batch[:, 2].astype(np.float32))
+        for i, action, reward, episode_done in zip(
+            range(len(batch)), batch[:,1], tanh(batch[:,2].astype(np.float32)), batch[:,3]
         ):
-            target_qv[i, action] = reward + GAMMA * qv[i]
+            target_qv[i, action] = reward + (0 if episode_done else GAMMA * qv[i])
         loss = F.mean_squared_error(predicted_qv, Variable(target_qv))
         return loss
 

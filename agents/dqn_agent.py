@@ -50,7 +50,7 @@ class DqnAgent(Agent):
     def act(self, state):
         if (not self.greedy) and (np.random.rand() < self.epsilon):
             return np.random.randint(self.dim.output)
-        x = Variable(state.reshape(1, -1).astype(np.float32))
+        x = Variable(np.array([state], dtype=np.float32))
         q = self.model.forward(x)
         return np.argmax(q.data[0])
 

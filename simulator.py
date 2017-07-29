@@ -20,13 +20,13 @@ class Simulator():
             self.trainer.end(total_reward)
 
     def _tick(self, action):
+        state = self.prep.get_state()
         if not action:
-            state = self.prep.get_state()
             action = self.agent.act(state)
         obs, reward, episode_done, info = self.env.step(action)
         state_next = self.prep.store_state(obs)
         if self.trainer:
-            self.trainer.train(state, action, reward, state_next)
+            self.trainer.train(state, action, reward, episode_done, state_next)
         return action, obs, reward, episode_done, info
 
     def run(self, episodes, frames_per_episode=300):
